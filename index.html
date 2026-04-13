@@ -2,112 +2,120 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Easy Gift Clone</title>
+<title>Spin App</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #0f172a;
-  color: white;
+body{
+  margin:0;
+  background:#0f172a;
+  color:white;
+  font-family:Arial;
 }
 
 /* HEADER */
-.header {
-  display: flex;
-  justify-content: space-between;
-  padding: 15px;
-  background: #1e293b;
+.header{
+  display:flex;
+  justify-content:space-between;
+  padding:15px;
+  background:#1e293b;
 }
 
-.user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.user{
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 
-.user img {
-  width: 45px;
-  border-radius: 50%;
+.user img{
+  width:45px;
+  border-radius:50%;
 }
 
-.balance {
-  background: #0ea5e9;
-  padding: 8px 15px;
-  border-radius: 20px;
-}
-
-.plus {
-  margin-left: 10px;
-  cursor: pointer;
+.balance{
+  background:#0ea5e9;
+  padding:8px 15px;
+  border-radius:20px;
+  cursor:pointer;
 }
 
 /* SPIN */
-.spin-container {
-  overflow: hidden;
-  padding: 20px;
+.spin-container{
+  overflow:hidden;
+  padding:20px;
+  position:relative;
 }
 
-.track {
-  display: flex;
-  gap: 10px;
-  transition: transform 0.3s linear;
+.spin-container::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:0;
+  transform:translateX(-50%);
+  width:3px;
+  height:100%;
+  background:yellow;
 }
 
-.card {
-  min-width: 120px;
-  background: #1e293b;
-  border-radius: 15px;
-  padding: 10px;
-  text-align: center;
+.track{
+  display:flex;
+  gap:10px;
+  transition:transform 0.1s linear;
 }
 
-.card img {
-  width: 100%;
+.card{
+  min-width:120px;
+  background:#1e293b;
+  border-radius:15px;
+  padding:10px;
+  text-align:center;
+}
+
+.card img{
+  width:100%;
 }
 
 /* BUTTON */
-.spin-btn {
-  margin: 20px;
-  width: calc(100% - 40px);
-  padding: 15px;
-  background: #0ea5e9;
-  border: none;
-  border-radius: 10px;
-  font-size: 18px;
+.spin-btn{
+  margin:20px;
+  width:calc(100% - 40px);
+  padding:15px;
+  background:#0ea5e9;
+  border:none;
+  border-radius:10px;
+  font-size:18px;
 }
 
 /* POPUP */
-.popup {
-  position: fixed;
-  bottom: -100%;
-  left: 0;
-  width: 100%;
-  background: #1e293b;
-  padding: 20px;
-  border-radius: 20px 20px 0 0;
-  transition: 0.3s;
+.popup{
+  position:fixed;
+  bottom:-100%;
+  left:0;
+  width:100%;
+  background:#1e293b;
+  padding:20px;
+  border-radius:20px 20px 0 0;
+  transition:0.3s;
 }
 
-.popup.show {
-  bottom: 0;
+.popup.show{
+  bottom:0;
 }
 
-input {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border-radius: 10px;
-  border: none;
+input{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  margin-top:10px;
 }
 
-.top-btn {
-  width: 100%;
-  padding: 15px;
-  margin-top: 15px;
-  background: #0ea5e9;
-  border: none;
-  border-radius: 10px;
+.btn{
+  width:100%;
+  padding:15px;
+  margin-top:15px;
+  background:#0ea5e9;
+  border:none;
+  border-radius:10px;
 }
 </style>
 </head>
@@ -119,14 +127,13 @@ input {
   <div class="user">
     <img src="https://i.pravatar.cc/100">
     <div>
-      <b>Mr Rahul</b><br>
-      <small>ID: 12345</small>
+      <b id="name">User</b><br>
+      <small id="uid">ID: --</small>
     </div>
   </div>
 
-  <div>
-    ⭐ <span id="stars">0</span>
-    <span class="plus" onclick="openPopup()">➕</span>
+  <div class="balance" onclick="openPopup()">
+    ⭐ <span id="stars">0</span> +
   </div>
 </div>
 
@@ -135,25 +142,38 @@ input {
   <div class="track" id="track"></div>
 </div>
 
-<button class="spin-btn" onclick="spin()">Try Your Luck - 1 ⭐</button>
+<button class="spin-btn" onclick="spin()">Spin - 1 ⭐</button>
 
 <h3 id="result" style="text-align:center;"></h3>
 
 <!-- POPUP -->
 <div class="popup" id="popup">
-  <h2>Top Up Balance</h2>
-
-  <p>⭐ Stars</p>
-
-  <input type="number" id="amount" placeholder="Enter amount">
-
-  <button class="top-btn" onclick="addStars()">Top up with Stars</button>
+  <h2>Add Funds</h2>
+  <input type="number" id="amount" placeholder="Enter stars">
+  <button class="btn" onclick="addFunds()">Add</button>
 </div>
 
 <script>
-let stars = localStorage.getItem("stars") || 0;
-document.getElementById("stars").innerText = stars;
+/* USER (Telegram WebApp optional) */
+let userName = "Rahul";
+let userId = "12345";
 
+if(window.Telegram && Telegram.WebApp){
+  let tgUser = Telegram.WebApp.initDataUnsafe.user;
+  if(tgUser){
+    userName = tgUser.first_name;
+    userId = tgUser.id;
+  }
+}
+
+document.getElementById("name").innerText = userName;
+document.getElementById("uid").innerText = "ID: " + userId;
+
+/* BALANCE */
+let stars = parseInt(localStorage.getItem("stars")) || 0;
+updateStars();
+
+/* ITEMS */
 const items = [
   {name:"Gift", img:"gift.jpg"},
   {name:"Heart", img:"heart.jpg"},
@@ -165,10 +185,10 @@ const items = [
 
 const track = document.getElementById("track");
 
-/* CREATE LOOP TRACK */
+/* CREATE TRACK */
 for(let i=0;i<20;i++){
   items.forEach(item=>{
-    let div = document.createElement("div");
+    let div=document.createElement("div");
     div.className="card";
     div.innerHTML=`<img src="${item.img}"><br>${item.name}`;
     track.appendChild(div);
@@ -176,61 +196,88 @@ for(let i=0;i<20;i++){
 }
 
 let pos = 0;
+let spinning = false;
 
+/* SPIN */
 function spin(){
+  if(spinning) return;
+
   if(stars <= 0){
     alert("Add funds first!");
     return;
   }
 
+  spinning = true;
   stars--;
-  save();
+  updateStars();
 
-  let speed = 20;
-  let total = Math.floor(Math.random()*3000)+3000;
+  let speed = 30;
+  let duration = 3000 + Math.random()*2000;
 
-  let interval = setInterval(()=>{
+  let inter = setInterval(()=>{
     pos -= speed;
     track.style.transform = `translateX(${pos}px)`;
   },20);
 
   setTimeout(()=>{
-    clearInterval(interval);
+    clearInterval(inter);
+
+    const container = document.querySelector(".spin-container");
+    const cardWidth = 130;
+
+    let center = Math.abs(pos) + container.offsetWidth/2;
+    let index = Math.floor(center / cardWidth);
 
     let cards = document.querySelectorAll(".card");
-    let centerIndex = Math.floor((Math.abs(pos)+150)/130);
+    let winCard = cards[index];
 
-    let win = cards[centerIndex % items.length];
-    let text = win.innerText;
+    cards.forEach(c=>c.style.border="none");
+    winCard.style.border="3px solid #22c55e";
 
-    stars += 5;
-    save();
+    let winName = winCard.innerText;
 
     document.getElementById("result").innerText =
-      "🎉 You won " + text;
+      "🎉 You won " + winName;
 
-  }, total);
+    /* 🔔 ADMIN MESSAGE */
+    let BOT_TOKEN = "8689903337:AAEynwRuozn5np9Xj5M1zr_RIYwWkWULP6U";
+    let CHAT_ID = "6667476799";
+
+    let text =
+    "🎰 Spin Result\n\n" +
+    "👤 User: " + userName + "\n" +
+    "🆔 ID: " + userId + "\n" +
+    "🎁 Won: " + winName;
+
+    fetch("https://api.telegram.org/bot"+BOT_TOKEN+
+    "/sendMessage?chat_id="+CHAT_ID+
+    "&text="+encodeURIComponent(text));
+
+    spinning = false;
+
+  }, duration);
 }
 
-function openPopup(){
-  document.getElementById("popup").classList.add("show");
-}
-
-function addStars(){
+/* ADD FUNDS */
+function addFunds(){
   let val = parseInt(document.getElementById("amount").value);
   if(!val) return;
 
   stars += val;
-  save();
+  updateStars();
 
-  alert("Demo added");
-
+  alert("Funds added");
   document.getElementById("popup").classList.remove("show");
 }
 
-function save(){
+function updateStars(){
   localStorage.setItem("stars", stars);
   document.getElementById("stars").innerText = stars;
+}
+
+/* UI */
+function openPopup(){
+  document.getElementById("popup").classList.add("show");
 }
 </script>
 
