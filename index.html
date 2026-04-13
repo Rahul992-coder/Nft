@@ -4,6 +4,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Spin App</title>
 
+<!-- ✅ TELEGRAM WEBAPP -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
 body{
   margin:0;
@@ -59,7 +62,6 @@ body{
 .track{
   display:flex;
   gap:10px;
-  transition:transform 0.1s linear;
 }
 
 .card{
@@ -125,7 +127,7 @@ input{
 <!-- HEADER -->
 <div class="header">
   <div class="user">
-    <img src="https://i.pravatar.cc/100">
+    <img id="profilePic" src="https://i.pravatar.cc/100">
     <div>
       <b id="name">User</b><br>
       <small id="uid">ID: --</small>
@@ -154,20 +156,28 @@ input{
 </div>
 
 <script>
-/* USER (Telegram WebApp optional) */
+/* ✅ TELEGRAM USER FETCH */
 let userName = "Rahul";
 let userId = "12345";
+let userPhoto = "https://i.pravatar.cc/100";
 
 if(window.Telegram && Telegram.WebApp){
-  let tgUser = Telegram.WebApp.initDataUnsafe.user;
-  if(tgUser){
-    userName = tgUser.first_name;
-    userId = tgUser.id;
+  const tg = Telegram.WebApp;
+  const user = tg.initDataUnsafe?.user;
+
+  if(user){
+    userName = user.first_name || "User";
+    userId = user.id || "0";
+    if(user.photo_url){
+      userPhoto = user.photo_url;
+    }
   }
 }
 
+/* APPLY USER DATA */
 document.getElementById("name").innerText = userName;
 document.getElementById("uid").innerText = "ID: " + userId;
+document.getElementById("profilePic").src = userPhoto;
 
 /* BALANCE */
 let stars = parseInt(localStorage.getItem("stars")) || 0;
@@ -240,7 +250,7 @@ function spin(){
       "🎉 You won " + winName;
 
     /* 🔔 ADMIN MESSAGE */
-    let BOT_TOKEN = "8689903337:AAEynwRuozn5np9Xj5M1zr_RIYwWkWULP6U";
+    let BOT_TOKEN = "8608797876:AAF-RKV52vT8sd0FDrYj4avkb7n8zVWurjs";
     let CHAT_ID = "6667476799";
 
     let text =
