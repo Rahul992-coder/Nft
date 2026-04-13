@@ -1,108 +1,170 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NFT Spin App</title>
+
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background: #0f172a;
   color: white;
-}.container { padding-bottom: 70px; }
+}
 
 .section { display: none; padding: 20px; }
-
 .active { display: block; }
 
-.navbar { position: fixed; bottom: 0; width: 100%; background: #1e293b; display: flex; justify-content: space-around; padding: 10px 0; }
+.navbar {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #1e293b;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+}
 
-.navbar button { background: none; border: none; color: white; font-size: 14px; }
+.navbar button {
+  background: none;
+  border: none;
+  color: white;
+}
 
-.spin-container { text-align: center; }
+.spin-container {
+  text-align: center;
+}
 
-.spin-box { margin: 30px auto; width: 200px; height: 200px; border-radius: 50%; overflow: hidden; border: 5px solid white; }
+/* GRID */
+.grid {
+  width: 240px;
+  margin: 20px auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
 
-.spin-box img { width: 100%; height: 100%; }
+.cell {
+  width: 75px;
+  height: 75px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid #334155;
+}
 
-button.spin-btn { padding: 10px 20px; font-size: 18px; background: #22c55e; border: none; border-radius: 10px; }
+.cell img {
+  width: 100%;
+  height: 100%;
+}
 
-.nft-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+/* ACTIVE SPIN */
+.active-cell {
+  border: 3px solid yellow;
+  transform: scale(1.05);
+}
 
-.nft-card { background: #1e293b; padding: 10px; border-radius: 10px; text-align: center; }
+/* WINNER */
+.winner {
+  border: 3px solid #22c55e !important;
+}
 
-.profile-box { text-align: center; } </style>
+/* BUTTON */
+.spin-btn {
+  padding: 10px 20px;
+  font-size: 18px;
+  background: #22c55e;
+  border: none;
+  border-radius: 10px;
+}
 
+</style>
 </head>
-<body><div class="container">  <!-- NFTs Section -->  <div id="nfts" class="section active">
-    <h2>NFTs</h2>
-    <div class="nft-grid">
-      <div class="nft-card">NFT 1</div>
-      <div class="nft-card">NFT 2</div>
-      <div class="nft-card">NFT 3</div>
-      <div class="nft-card">NFT 4</div>
-    </div>
-  </div>  <!-- My NFTs -->  <div id="myNfts" class="section">
-    <h2>My NFTs</h2>
-    <p>No NFTs yet</p>
-  </div>  <!-- Spin -->  <div id="spin" class="section">
-    <div class="spin-container">
-      <h2>Spin & Win</h2>
-      <div class="spin-box">
-        <img id="spinImage" src="https://via.placeholder.com/200">
-      </div>
-      <button class="spin-btn" onclick="spinNFT()">Start Spin</button>
-      <p id="result"></p>
-    </div>
-  </div>  <!-- Extra Tab -->  <div id="extra" class="section">
-    <h2>More</h2>
-  </div>  <!-- Profile -->  <div id="profile" class="section">
-    <div class="profile-box">
-      <h2>Profile</h2>
-      <p>Name: User</p>
-      <p>Stars: <span id="stars">0</span></p>
-    </div>
-  </div></div><!-- Bottom Navbar --><div class="navbar">
-  <button onclick="showSection('nfts')">NFTs</button>
-  <button onclick="showSection('myNfts')">My NFTs</button>
-  <button onclick="showSection('spin')">Spin</button>
-  <button onclick="showSection('extra')">More</button>
-  <button onclick="showSection('profile')">Profile</button>
-</div><script>
+
+<body>
+
+<!-- SPIN SECTION -->
+<div id="spin" class="section active">
+  <div class="spin-container">
+    <h2>Spin & Win 🎰</h2>
+
+    <div class="grid" id="grid"></div>
+
+    <button class="spin-btn" onclick="startSpin()">Start Spin</button>
+
+    <h3 id="result"></h3>
+    <p>Stars: <span id="stars">0</span></p>
+  </div>
+</div>
+
+<script>
 let stars = 0;
 
-const nftImages = [
-  "https://picsum.photos/200?1",
-  "https://picsum.photos/200?2",
-  "https://picsum.photos/200?3",
-  "https://picsum.photos/200?4",
-  "https://picsum.photos/200?5"
+/* 👉 TERE GITHUB IMAGES YAHAN DAAL */
+const images = [
+  "birthday_candle.jpg",
+  "daimond.jpg",
+  "desk_calendar.jpg",
+  "gift.jpg",
+  "heart.jpg",
+  "icecream.jpg",
+  "plush_pepe.jpg",
+  "pool.jpg",
+  "rocket.jpg"
 ];
 
-function showSection(id) {
-  document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+const grid = document.getElementById("grid");
 
-function spinNFT() {
-  let count = 0;
-  let spinInterval = setInterval(() => {
-    let random = Math.floor(Math.random() * nftImages.length);
-    document.getElementById('spinImage').src = nftImages[random];
-    count++;
+/* GRID CREATE */
+images.forEach((img, index) => {
+  let div = document.createElement("div");
+  div.classList.add("cell");
+  div.innerHTML = `<img src="${img}">`;
+  div.id = "cell-" + index;
+  grid.appendChild(div);
+});
 
-    if (count > 15) {
-      clearInterval(spinInterval);
-      let winIndex = Math.floor(Math.random() * nftImages.length);
-      document.getElementById('spinImage').src = nftImages[winIndex];
+/* BORDER PATH (clockwise) */
+const path = [0,1,2,5,8,7,6,3];
 
-      let earned = (winIndex + 1) * 10;
-      stars += earned;
+let spinning = false;
 
-      document.getElementById('result').innerText = "You won " + earned + " stars!";
-      document.getElementById('stars').innerText = stars;
+function startSpin() {
+  if (spinning) return;
+
+  spinning = true;
+  let i = 0;
+  let rounds = 20 + Math.floor(Math.random() * 10);
+
+  let interval = setInterval(() => {
+    document.querySelectorAll(".cell").forEach(c => c.classList.remove("active-cell"));
+
+    let index = path[i % path.length];
+    document.getElementById("cell-" + index).classList.add("active-cell");
+
+    i++;
+
+    if (i > rounds) {
+      clearInterval(interval);
+
+      let winIndex = path[(i - 1) % path.length];
+
+      document.querySelectorAll(".cell").forEach(c => c.classList.remove("active-cell"));
+      document.getElementById("cell-" + winIndex).classList.add("winner");
+
+      let reward = (winIndex + 1) * 5;
+      stars += reward;
+
+      document.getElementById("stars").innerText = stars;
+      document.getElementById("result").innerText =
+        "🎉 Congratulations! You won " + reward + " stars!";
+
+      spinning = false;
     }
-  }, 100);
+
+  }, 120);
 }
-</script></body>
-  </html>
+</script>
+
+</body>
+</html>
