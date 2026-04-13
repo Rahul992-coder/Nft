@@ -7,16 +7,15 @@
 <style>
 body {
   margin: 0;
+  font-family: Arial;
   background: #0f172a;
   color: white;
-  font-family: Arial;
 }
 
 /* HEADER */
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   padding: 15px;
   background: #1e293b;
 }
@@ -29,7 +28,6 @@ body {
 
 .user img {
   width: 45px;
-  height: 45px;
   border-radius: 50%;
 }
 
@@ -37,34 +35,34 @@ body {
   background: #0ea5e9;
   padding: 8px 15px;
   border-radius: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
 .plus {
-  background: white;
-  color: black;
-  padding: 2px 8px;
-  border-radius: 50%;
+  margin-left: 10px;
   cursor: pointer;
 }
 
-/* SPIN GRID */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+/* SPIN */
+.spin-container {
+  overflow: hidden;
   padding: 20px;
 }
 
-.cell {
-  background: #1e293b;
-  border-radius: 10px;
-  padding: 10px;
+.track {
+  display: flex;
+  gap: 10px;
+  transition: transform 0.3s linear;
 }
 
-.cell img {
+.card {
+  min-width: 120px;
+  background: #1e293b;
+  border-radius: 15px;
+  padding: 10px;
+  text-align: center;
+}
+
+.card img {
   width: 100%;
 }
 
@@ -79,14 +77,6 @@ body {
   font-size: 18px;
 }
 
-.active {
-  border: 3px solid yellow;
-}
-
-.win {
-  border: 3px solid green;
-}
-
 /* POPUP */
 .popup {
   position: fixed;
@@ -95,6 +85,7 @@ body {
   width: 100%;
   background: #1e293b;
   padding: 20px;
+  border-radius: 20px 20px 0 0;
   transition: 0.3s;
 }
 
@@ -104,8 +95,19 @@ body {
 
 input {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   margin-top: 10px;
+  border-radius: 10px;
+  border: none;
+}
+
+.top-btn {
+  width: 100%;
+  padding: 15px;
+  margin-top: 15px;
+  background: #0ea5e9;
+  border: none;
+  border-radius: 10px;
 }
 </style>
 </head>
@@ -117,19 +119,21 @@ input {
   <div class="user">
     <img src="https://i.pravatar.cc/100">
     <div>
-      <b id="name">Rahul</b><br>
-      <small id="userid">ID: 12345</small>
+      <b>Mr Rahul</b><br>
+      <small>ID: 12345</small>
     </div>
   </div>
 
-  <div class="balance">
+  <div>
     ⭐ <span id="stars">0</span>
-    <div class="plus" onclick="openPopup()">+</div>
+    <span class="plus" onclick="openPopup()">➕</span>
   </div>
 </div>
 
-<!-- GRID -->
-<div class="grid" id="grid"></div>
+<!-- SPIN -->
+<div class="spin-container">
+  <div class="track" id="track"></div>
+</div>
 
 <button class="spin-btn" onclick="spin()">Try Your Luck - 1 ⭐</button>
 
@@ -137,41 +141,44 @@ input {
 
 <!-- POPUP -->
 <div class="popup" id="popup">
-  <h3>Add Stars</h3>
-  <input type="number" id="amount" placeholder="Enter stars">
-  <button onclick="addStars()">Add</button>
+  <h2>Top Up Balance</h2>
+
+  <p>⭐ Stars</p>
+
+  <input type="number" id="amount" placeholder="Enter amount">
+
+  <button class="top-btn" onclick="addStars()">Top up with Stars</button>
 </div>
 
 <script>
 let stars = localStorage.getItem("stars") || 0;
 document.getElementById("stars").innerText = stars;
 
-const images = [
-  "birthday_candle.jpg",
-  "daimond.jpg",
-  "desk_calendar.jpg",
-  "gift.jpg",
-  "heart.jpg",
-  "icecream.jpg",
-  "plush_pepe.jpg",
-  "pool.jpg",
-  "rocket.jpg"
+const items = [
+  {name:"Gift", img:"gift.jpg"},
+  {name:"Heart", img:"heart.jpg"},
+  {name:"Rocket", img:"rocket.jpg"},
+  {name:"Icecream", img:"icecream.jpg"},
+  {name:"Candle", img:"birthday_candle.jpg"},
+  {name:"Diamond", img:"daimond.jpg"}
 ];
 
-const grid = document.getElementById("grid");
+const track = document.getElementById("track");
 
-images.forEach((img, i) => {
-  let div = document.createElement("div");
-  div.className = "cell";
-  div.id = "c"+i;
-  div.innerHTML = `<img src="${img}">`;
-  grid.appendChild(div);
-});
+/* CREATE LOOP TRACK */
+for(let i=0;i<20;i++){
+  items.forEach(item=>{
+    let div = document.createElement("div");
+    div.className="card";
+    div.innerHTML=`<img src="${item.img}"><br>${item.name}`;
+    track.appendChild(div);
+  });
+}
 
-const path = [0,1,2,5,8,7,6,3];
+let pos = 0;
 
-function spin() {
-  if (stars <= 0) {
+function spin(){
+  if(stars <= 0){
     alert("Add funds first!");
     return;
   }
@@ -179,32 +186,30 @@ function spin() {
   stars--;
   save();
 
-  let i = 0;
-  let rounds = 20;
+  let speed = 20;
+  let total = Math.floor(Math.random()*3000)+3000;
 
-  let inter = setInterval(() => {
-    document.querySelectorAll(".cell").forEach(c=>c.classList.remove("active"));
+  let interval = setInterval(()=>{
+    pos -= speed;
+    track.style.transform = `translateX(${pos}px)`;
+  },20);
 
-    let index = path[i % path.length];
-    document.getElementById("c"+index).classList.add("active");
+  setTimeout(()=>{
+    clearInterval(interval);
 
-    i++;
+    let cards = document.querySelectorAll(".card");
+    let centerIndex = Math.floor((Math.abs(pos)+150)/130);
 
-    if (i > rounds) {
-      clearInterval(inter);
+    let win = cards[centerIndex % items.length];
+    let text = win.innerText;
 
-      let win = path[(i-1)%path.length];
-      document.getElementById("c"+win).classList.add("win");
+    stars += 5;
+    save();
 
-      let reward = (win+1)*5;
-      stars += reward;
-      save();
+    document.getElementById("result").innerText =
+      "🎉 You won " + text;
 
-      document.getElementById("result").innerText =
-        "🎉 Congratulations! +" + reward + " stars";
-    }
-
-  }, 120);
+  }, total);
 }
 
 function openPopup(){
@@ -215,11 +220,10 @@ function addStars(){
   let val = parseInt(document.getElementById("amount").value);
   if(!val) return;
 
-  // ⚠️ FAKE ADD (REAL PAYMENT BACKEND SE HOGA)
   stars += val;
   save();
 
-  alert("Demo: Stars added!");
+  alert("Demo added");
 
   document.getElementById("popup").classList.remove("show");
 }
