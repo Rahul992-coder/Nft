@@ -1,106 +1,151 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NFT Spin App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Easy Gift Clone</title>
 
 <style>
 body {
   margin: 0;
-  font-family: Arial;
   background: #0f172a;
   color: white;
+  font-family: Arial;
 }
 
-.section { display: none; padding: 20px; }
-.active { display: block; }
-
-.navbar {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  background: #1e293b;
+/* HEADER */
+.header {
   display: flex;
-  justify-content: space-around;
-  padding: 10px 0;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: #1e293b;
 }
 
-.navbar button {
-  background: none;
-  border: none;
-  color: white;
+.user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.spin-container {
-  text-align: center;
+.user img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
 }
 
-/* GRID */
+.balance {
+  background: #0ea5e9;
+  padding: 8px 15px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.plus {
+  background: white;
+  color: black;
+  padding: 2px 8px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* SPIN GRID */
 .grid {
-  width: 240px;
-  margin: 20px auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
+  gap: 8px;
+  padding: 20px;
 }
 
 .cell {
-  width: 75px;
-  height: 75px;
+  background: #1e293b;
   border-radius: 10px;
-  overflow: hidden;
-  border: 2px solid #334155;
+  padding: 10px;
 }
 
 .cell img {
   width: 100%;
-  height: 100%;
-}
-
-/* ACTIVE SPIN */
-.active-cell {
-  border: 3px solid yellow;
-  transform: scale(1.05);
-}
-
-/* WINNER */
-.winner {
-  border: 3px solid #22c55e !important;
 }
 
 /* BUTTON */
 .spin-btn {
-  padding: 10px 20px;
-  font-size: 18px;
-  background: #22c55e;
+  margin: 20px;
+  width: calc(100% - 40px);
+  padding: 15px;
+  background: #0ea5e9;
   border: none;
   border-radius: 10px;
+  font-size: 18px;
 }
 
+.active {
+  border: 3px solid yellow;
+}
+
+.win {
+  border: 3px solid green;
+}
+
+/* POPUP */
+.popup {
+  position: fixed;
+  bottom: -100%;
+  left: 0;
+  width: 100%;
+  background: #1e293b;
+  padding: 20px;
+  transition: 0.3s;
+}
+
+.popup.show {
+  bottom: 0;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+}
 </style>
 </head>
 
 <body>
 
-<!-- SPIN SECTION -->
-<div id="spin" class="section active">
-  <div class="spin-container">
-    <h2>Spin & Win 🎰</h2>
+<!-- HEADER -->
+<div class="header">
+  <div class="user">
+    <img src="https://i.pravatar.cc/100">
+    <div>
+      <b id="name">Rahul</b><br>
+      <small id="userid">ID: 12345</small>
+    </div>
+  </div>
 
-    <div class="grid" id="grid"></div>
-
-    <button class="spin-btn" onclick="startSpin()">Start Spin</button>
-
-    <h3 id="result"></h3>
-    <p>Stars: <span id="stars">0</span></p>
+  <div class="balance">
+    ⭐ <span id="stars">0</span>
+    <div class="plus" onclick="openPopup()">+</div>
   </div>
 </div>
 
-<script>
-let stars = 0;
+<!-- GRID -->
+<div class="grid" id="grid"></div>
 
-/* 👉 TERE GITHUB IMAGES YAHAN DAAL */
+<button class="spin-btn" onclick="spin()">Try Your Luck - 1 ⭐</button>
+
+<h3 id="result" style="text-align:center;"></h3>
+
+<!-- POPUP -->
+<div class="popup" id="popup">
+  <h3>Add Stars</h3>
+  <input type="number" id="amount" placeholder="Enter stars">
+  <button onclick="addStars()">Add</button>
+</div>
+
+<script>
+let stars = localStorage.getItem("stars") || 0;
+document.getElementById("stars").innerText = stars;
+
 const images = [
   "birthday_candle.jpg",
   "daimond.jpg",
@@ -115,54 +160,73 @@ const images = [
 
 const grid = document.getElementById("grid");
 
-/* GRID CREATE */
-images.forEach((img, index) => {
+images.forEach((img, i) => {
   let div = document.createElement("div");
-  div.classList.add("cell");
+  div.className = "cell";
+  div.id = "c"+i;
   div.innerHTML = `<img src="${img}">`;
-  div.id = "cell-" + index;
   grid.appendChild(div);
 });
 
-/* BORDER PATH (clockwise) */
 const path = [0,1,2,5,8,7,6,3];
 
-let spinning = false;
+function spin() {
+  if (stars <= 0) {
+    alert("Add funds first!");
+    return;
+  }
 
-function startSpin() {
-  if (spinning) return;
+  stars--;
+  save();
 
-  spinning = true;
   let i = 0;
-  let rounds = 20 + Math.floor(Math.random() * 10);
+  let rounds = 20;
 
-  let interval = setInterval(() => {
-    document.querySelectorAll(".cell").forEach(c => c.classList.remove("active-cell"));
+  let inter = setInterval(() => {
+    document.querySelectorAll(".cell").forEach(c=>c.classList.remove("active"));
 
     let index = path[i % path.length];
-    document.getElementById("cell-" + index).classList.add("active-cell");
+    document.getElementById("c"+index).classList.add("active");
 
     i++;
 
     if (i > rounds) {
-      clearInterval(interval);
+      clearInterval(inter);
 
-      let winIndex = path[(i - 1) % path.length];
+      let win = path[(i-1)%path.length];
+      document.getElementById("c"+win).classList.add("win");
 
-      document.querySelectorAll(".cell").forEach(c => c.classList.remove("active-cell"));
-      document.getElementById("cell-" + winIndex).classList.add("winner");
-
-      let reward = (winIndex + 1) * 5;
+      let reward = (win+1)*5;
       stars += reward;
+      save();
 
-      document.getElementById("stars").innerText = stars;
       document.getElementById("result").innerText =
-        "🎉 Congratulations! You won " + reward + " stars!";
-
-      spinning = false;
+        "🎉 Congratulations! +" + reward + " stars";
     }
 
   }, 120);
+}
+
+function openPopup(){
+  document.getElementById("popup").classList.add("show");
+}
+
+function addStars(){
+  let val = parseInt(document.getElementById("amount").value);
+  if(!val) return;
+
+  // ⚠️ FAKE ADD (REAL PAYMENT BACKEND SE HOGA)
+  stars += val;
+  save();
+
+  alert("Demo: Stars added!");
+
+  document.getElementById("popup").classList.remove("show");
+}
+
+function save(){
+  localStorage.setItem("stars", stars);
+  document.getElementById("stars").innerText = stars;
 }
 </script>
 
