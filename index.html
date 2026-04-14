@@ -2,9 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Easy Gift Clone</title>
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Spin App</title>
 
 <style>
 body{
@@ -22,10 +20,19 @@ body{
   background:#1e293b;
 }
 
-.user{display:flex;gap:10px;align-items:center;}
-.user img{width:45px;border-radius:50%;}
+/* USER */
+.user{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
 
-/* NAV */
+.user img{
+  width:45px;
+  border-radius:50%;
+}
+
+/* NAVBAR */
 .navbar{
   position:fixed;
   bottom:0;
@@ -36,27 +43,42 @@ body{
   padding:10px;
 }
 
-/* SECTIONS */
+.navbar button{
+  background:none;
+  border:none;
+  color:white;
+}
+
+/* SECTION */
 .section{display:none;}
 .active{display:block;}
 
 /* SPIN */
 .spin-container{
   overflow:hidden;
-  position:relative;
   padding:20px;
+  position:relative;
 }
 
-.spin-container::after{
-  content:"";
+/* CENTER BOX */
+.center-box{
   position:absolute;
+  top:50%;
   left:50%;
-  width:3px;
-  height:100%;
-  background:yellow;
+  transform:translate(-50%,-50%);
+  width:130px;
+  height:150px;
+  border:3px solid yellow;
+  border-radius:12px;
+  pointer-events:none;
 }
 
-.track{display:flex;gap:10px;}
+/* TRACK */
+.track{
+  display:flex;
+  gap:10px;
+  transition:0.5s ease;
+}
 
 .card{
   min-width:120px;
@@ -70,22 +92,21 @@ body{
 
 /* BUTTON */
 .btn{
-  width:90%;
-  margin:20px;
-  padding:15px;
+  margin:15px auto;
+  padding:18px;
+  width:92%;
   background:#0ea5e9;
   border:none;
-  border-radius:10px;
+  border-radius:12px;
+  display:block;
 }
 
-/* TASKS */
+/* TASK */
 .task{
-  background:#334155;
+  background:#1e293b;
   margin:10px;
   padding:15px;
-  border-radius:15px;
-  display:flex;
-  justify-content:space-between;
+  border-radius:12px;
 }
 
 /* POPUP */
@@ -95,12 +116,25 @@ body{
   width:100%;
   background:#1e293b;
   padding:20px;
-  transition:.3s;
+  transition:0.3s;
 }
 
 .popup.show{bottom:0;}
 
-input{width:100%;padding:10px;margin-top:10px;}
+.close{
+  position:absolute;
+  right:15px;
+  top:10px;
+  cursor:pointer;
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  padding:10px;
+}
 </style>
 </head>
 
@@ -109,10 +143,10 @@ input{width:100%;padding:10px;margin-top:10px;}
 <!-- HEADER -->
 <div class="header">
   <div class="user">
-    <img id="pic" src="https://i.pravatar.cc/100">
+    <img src="https://i.pravatar.cc/100">
     <div>
-      <b id="name">User</b><br>
-      <small id="uid">ID</small>
+      <b>Rahul</b><br>
+      <small>ID:12345</small>
     </div>
   </div>
   ⭐ <span id="stars">0</span>
@@ -122,9 +156,11 @@ input{width:100%;padding:10px;margin-top:10px;}
 <div id="home" class="section active">
   <div class="spin-container">
     <div class="track" id="track"></div>
+    <div class="center-box"></div>
   </div>
+
   <button class="btn" onclick="spin()">Spin - 1 ⭐</button>
-  <h3 id="result"></h3>
+  <h3 id="result" style="text-align:center;"></h3>
 </div>
 
 <!-- TASKS -->
@@ -135,171 +171,134 @@ input{width:100%;padding:10px;margin-top:10px;}
 
 <!-- FUNDS -->
 <div id="funds" class="section">
-  <button class="btn" onclick="openPopup()">Add Funds</button>
+  <button class="btn" onclick="openPopup()">Add Stars</button>
 </div>
 
 <!-- PROFILE -->
 <div id="profile" class="section">
   <h2 style="padding:10px;">My Items</h2>
-  <div id="inv"></div>
+  <div class="grid" id="inventory"></div>
 </div>
 
 <!-- POPUP -->
 <div class="popup" id="popup">
-  <div style="display:flex;justify-content:space-between;">
-    <h2>Add Funds</h2>
-    <span onclick="closePopup()">❌</span>
-  </div>
-  <input id="amount" type="number">
+  <span class="close" onclick="closePopup()">❌</span>
+  <h2>Add Stars</h2>
+  <input type="number" id="amount">
   <button class="btn" onclick="addFunds()">Add</button>
 </div>
 
 <!-- NAV -->
 <div class="navbar">
   <button onclick="show('home')">Home</button>
+  <button onclick="show('funds')">Add Funds</button>
   <button onclick="show('tasks')">Tasks</button>
-  <button onclick="show('funds')">Funds</button>
   <button onclick="show('profile')">Profile</button>
 </div>
 
 <script>
-/* USER */
-let userName="Rahul", userId="12345";
-
-if(window.Telegram){
- let u=Telegram.WebApp.initDataUnsafe.user;
- if(u){userName=u.first_name;userId=u.id;}
-}
-
-name.innerText=userName;
-uid.innerText="ID:"+userId;
-
-/* BALANCE */
 let stars=parseInt(localStorage.getItem("stars"))||0;
-update();
+let inventory=JSON.parse(localStorage.getItem("inv"))||[];
 
-/* ITEMS */
-const items=[
-{name:"Gift",img:"gift.jpg"},
-{name:"Heart",img:"heart.jpg"},
-{name:"Rocket",img:"rocket.jpg"}
-];
-
+const items=["Gift","Heart","Rocket","Icecream"];
 const track=document.getElementById("track");
 
-/* CREATE */
-for(let i=0;i<20;i++){
+/* BUILD TRACK */
+for(let i=0;i<30;i++){
  items.forEach(it=>{
   let d=document.createElement("div");
   d.className="card";
-  d.innerHTML=`<img src="${it.img}"><br>${it.name}`;
+  d.innerText=it;
   track.appendChild(d);
  });
 }
 
-let pos=0;
-
 /* SPIN */
 function spin(){
  if(stars<=0){alert("Add funds");return;}
-
  stars--;update();
 
- let inter=setInterval(()=>{
-  pos-=25;
-  track.style.transform=`translateX(${pos}px)`;
- },20);
+ let cards=document.querySelectorAll(".card");
+
+ let index=Math.floor(cards.length/2)+Math.floor(Math.random()*10);
+
+ let move=-(index*130)+(window.innerWidth/2-65);
+
+ track.style.transform=`translateX(${move}px)`;
 
  setTimeout(()=>{
-  clearInterval(inter);
+  let win=cards[index].innerText;
 
-  let cards=document.querySelectorAll(".card");
-  let center=window.innerWidth/2;
+  document.getElementById("result").innerText="🎉 You won "+win;
 
-  let win, min=9999;
-
-  cards.forEach(c=>{
-    let r=c.getBoundingClientRect();
-    let diff=Math.abs(center-(r.left+r.width/2));
-    if(diff<min){min=diff;win=c;}
-  });
-
-  cards.forEach(c=>c.style.border="none");
-  win.style.border="3px solid yellow";
-
-  let name=win.innerText;
-  result.innerText="🎉 You won "+name;
-
-  // SAVE
-  let inv=JSON.parse(localStorage.getItem("inv"))||[];
-  inv.push(name);
-  localStorage.setItem("inv",JSON.stringify(inv));
+  inventory.push(win);
+  localStorage.setItem("inv",JSON.stringify(inventory));
   loadInv();
-
-  // ADMIN MSG
-  fetch(`https://api.telegram.org/bot8689903337:AAEynwRuozn5np9Xj5M1zr_RIYwWkWULP6U/sendMessage?chat_id=6667476799&text=${encodeURIComponent(userName+" won "+name)}`);
-
- },3000);
+ },500);
 }
 
 /* TASKS */
 const tasks=[
-{title:"Join Channel",reward:2,link:"https://t.me/YOUR_CHANNEL"},
-{title:"Join Group",reward:1,link:"https://t.me/YOUR_GROUP"}
+ {name:"Join Channel 1",reward:2},
+ {name:"Join Channel 2",reward:3}
 ];
 
 function loadTasks(){
- taskList.innerHTML="";
+ let div=document.getElementById("taskList");
+ div.innerHTML="";
+
  tasks.forEach((t,i)=>{
-  let done=localStorage.getItem("t"+i);
+  let done=localStorage.getItem("task"+i);
 
   let d=document.createElement("div");
   d.className="task";
+
   d.innerHTML=`
-    <div>${t.title}</div>
-    <button>${done?"Done":"+"+t.reward+"⭐"}</button>
+  <b>${t.name}</b><br><br>
+  <button class="btn">${done?"Done":"Join +"+t.reward}</button>
   `;
 
-  d.onclick=()=>{
+  d.querySelector("button").onclick=()=>{
     if(done)return;
-    window.open(t.link);
     stars+=t.reward;
-    localStorage.setItem("t"+i,true);
+    localStorage.setItem("task"+i,true);
     update();
     loadTasks();
   };
 
-  taskList.appendChild(d);
+  div.appendChild(d);
  });
 }
 loadTasks();
 
 /* INVENTORY */
 function loadInv(){
- let inv=JSON.parse(localStorage.getItem("inv"))||[];
- let d=document.getElementById("inv");
- d.innerHTML="";
- inv.forEach(i=>{
-  let el=document.createElement("div");
-  el.innerText=i;
-  d.appendChild(el);
+ let div=document.getElementById("inventory");
+ div.innerHTML="";
+ inventory.forEach(n=>{
+  let d=document.createElement("div");
+  d.className="card";
+  d.innerText=n;
+  div.appendChild(d);
  });
 }
 loadInv();
 
 /* FUNDS */
 function addFunds(){
- let v=parseInt(amount.value);
- if(!v)return;
- stars+=v;
+ let val=parseInt(document.getElementById("amount").value);
+ if(!val)return;
+ stars+=val;
  update();
  closePopup();
 }
 
+/* UPDATE */
 function update(){
  localStorage.setItem("stars",stars);
- starsEl.innerText=stars;
+ document.getElementById("stars").innerText=stars;
 }
+update();
 
 /* NAV */
 function show(id){
@@ -308,8 +307,12 @@ function show(id){
 }
 
 /* POPUP */
-function openPopup(){popup.classList.add("show");}
-function closePopup(){popup.classList.remove("show");}
+function openPopup(){
+ document.getElementById("popup").classList.add("show");
+}
+function closePopup(){
+ document.getElementById("popup").classList.remove("show");
+}
 </script>
 
 </body>
