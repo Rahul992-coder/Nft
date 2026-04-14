@@ -14,7 +14,7 @@ body{margin:0;background:#0f172a;color:white;font-family:Arial}
 .user{display:flex;align-items:center;gap:10px}
 .user img{width:45px;border-radius:50%}
 
-/* NAVBAR BIG + UP */
+/* NAVBAR */
 .navbar{
  position:fixed;
  bottom:15px;
@@ -27,10 +27,7 @@ body{margin:0;background:#0f172a;color:white;font-family:Arial}
  padding:15px;
  border-radius:20px;
 }
-.navbar button{
- background:none;border:none;color:white;
- font-size:16px;font-weight:bold;
-}
+.navbar button{background:none;border:none;color:white;font-size:16px;font-weight:bold}
 
 /* SECTION */
 .section{display:none}
@@ -47,7 +44,7 @@ body{margin:0;background:#0f172a;color:white;font-family:Arial}
  border-radius:12px;
 }
 
-.track{display:flex;gap:10px;transition:0.5s ease}
+.track{display:flex;gap:10px;transition:.5s}
 .card{
  min-width:120px;
  background:#1e293b;
@@ -69,41 +66,58 @@ body{margin:0;background:#0f172a;color:white;font-family:Arial}
  background:#0ea5e9;
  border:none;
  border-radius:12px;
- font-size:17px;
+ font-size:18px;
 }
 
 /* TASK */
-.task{
- background:#1e293b;
- margin:10px;
- padding:15px;
- border-radius:12px;
-}
+.task{background:#1e293b;margin:10px;padding:15px;border-radius:12px}
 
-/* POPUP */
+/* POPUP CENTER FIX */
 .popup{
  position:fixed;
- bottom:-100%;
+ top:0;
+ left:0;
  width:100%;
- background:#1e293b;
- padding:20px;
- transition:.3s;
+ height:100%;
+ background:rgba(0,0,0,0.7);
+ display:none;
+ align-items:center;
+ justify-content:center;
 }
-.popup.show{bottom:0}
+
+.popup.show{
+ display:flex;
+}
+
+.popup-box{
+ background:#1e293b;
+ padding:25px;
+ border-radius:15px;
+ width:85%;
+ text-align:center;
+ position:relative;
+}
+
+.popup-box input{
+ width:100%;
+ padding:15px;
+ margin-top:15px;
+ font-size:18px;
+ border-radius:10px;
+ border:none;
+}
+
+/* CLOSE BUTTON */
 .close{
  position:absolute;
  right:15px;
  top:10px;
+ font-size:22px;
  cursor:pointer;
 }
 
 /* GRID */
-.grid{
- display:grid;
- grid-template-columns:repeat(2,1fr);
- gap:10px;
- padding:10px;
-}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
 </style>
 </head>
 
@@ -151,10 +165,12 @@ body{margin:0;background:#0f172a;color:white;font-family:Arial}
 
 <!-- POPUP -->
 <div class="popup" id="popup">
-  <span class="close" onclick="closePopup()">❌</span>
-  <h2>Add Stars</h2>
-  <input type="number" id="amount">
-  <button class="btn" onclick="addFunds()">Add</button>
+  <div class="popup-box">
+    <span class="close" onclick="closePopup()">❌</span>
+    <h2>Add Stars</h2>
+    <input type="number" id="amount" placeholder="Enter amount">
+    <button class="btn" onclick="addFunds()">Add</button>
+  </div>
 </div>
 
 <!-- NAV -->
@@ -186,20 +202,30 @@ name.innerText=userName;
 uid.innerText="ID: "+userId;
 pic.src=userPhoto;
 
-/* ADMIN CONFIG */
-const BOT_TOKEN="8689903337:AAEynwRuozn5np9Xj5M1zr_RIYwWkWULP6U";
-const ADMIN_ID= "6667476799";
+/* ADMIN */
+const BOT_TOKEN= "8689903337:AAEynwRuozn5np9Xj5M1zr_RIYwWkWULP6U";
+const ADMIN_ID="6667476799";
 
 /* DATA */
 let stars=parseInt(localStorage.getItem("stars"))||0;
 let inventory=JSON.parse(localStorage.getItem("inv"))||[];
 
-/* ITEMS (LOCAL IMAGES) */
+/* ITEMS */
 const items=[
  {name:"Gift",img:"gift.jpg"},
  {name:"Heart",img:"heart.jpg"},
  {name:"Rocket",img:"rocket.jpg"},
- {name:"Icecream",img:"icecream.jpg"}
+ {name:"Ice Cream",img:"icecream.jpg"},
+ {name:"Birthday Candle",img:"birthday_candle.jpg"},
+ {name:"Daimond",img:"daimond.jpg"},
+ {name:"Desk Calendar",img:"desk_calendar.jpg"},
+ {name:"Plush Pepe",img:"plush_pepe.jpg"},
+ {name:"Float Pool",img:"pool.jpg"},
+ {name:"Rose",img:"rose.jpg"},
+ {name:"Socks",img:"socks.jpg"},
+ {name:"Teddy",img:"teddy.jpg"},
+ {name:"Victory Medal",img:"victory_medal.jpg"},
+ {name:"Cigar",img:"vintage_cigar.jpg"}
 ];
 
 const track=document.getElementById("track");
@@ -214,16 +240,15 @@ for(let i=0;i<30;i++){
  });
 }
 
-/* SPIN (ONLY WIN) */
+/* SPIN */
 function spin(){
  if(stars<=0){alert("Add funds");return;}
  stars--;update();
 
  let cards=document.querySelectorAll(".card");
-
  let index=Math.floor(cards.length/2)+Math.floor(Math.random()*10);
- let move=-(index*130)+(window.innerWidth/2-65);
 
+ let move=-(index*130)+(window.innerWidth/2-65);
  track.style.transform=`translateX(${move}px)`;
 
  setTimeout(()=>{
@@ -235,7 +260,6 @@ function spin(){
   localStorage.setItem("inv",JSON.stringify(inventory));
   loadInv();
 
-  /* ADMIN MSG */
   let msg=`🎉 NEW WIN
 
 Name: ${userName}
