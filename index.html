@@ -14,9 +14,23 @@ body{margin:0;background:#0f172a;color:white;font-family:Arial}
 .user{display:flex;align-items:center;gap:10px}
 .user img{width:45px;border-radius:50%}
 
-/* NAV */
-.navbar{position:fixed;bottom:0;width:100%;background:#1e293b;display:flex;justify-content:space-around;padding:10px}
-.navbar button{background:none;border:none;color:white}
+/* NAVBAR BIG + UP */
+.navbar{
+ position:fixed;
+ bottom:15px;
+ left:50%;
+ transform:translateX(-50%);
+ width:95%;
+ background:#1e293b;
+ display:flex;
+ justify-content:space-around;
+ padding:15px;
+ border-radius:20px;
+}
+.navbar button{
+ background:none;border:none;color:white;
+ font-size:16px;font-weight:bold;
+}
 
 /* SECTION */
 .section{display:none}
@@ -24,8 +38,6 @@ body{margin:0;background:#0f172a;color:white;font-family:Arial}
 
 /* SPIN */
 .spin-container{overflow:hidden;padding:20px;position:relative}
-
-/* YELLOW BOX */
 .center-box{
  position:absolute;
  top:50%;left:50%;
@@ -33,25 +45,65 @@ body{margin:0;background:#0f172a;color:white;font-family:Arial}
  width:130px;height:150px;
  border:3px solid yellow;
  border-radius:12px;
- pointer-events:none;
 }
 
 .track{display:flex;gap:10px;transition:0.5s ease}
-.card{min-width:120px;background:#1e293b;border-radius:15px;padding:10px;text-align:center}
+.card{
+ min-width:120px;
+ background:#1e293b;
+ border-radius:15px;
+ padding:10px;
+ text-align:center;
+}
+.card img{
+ width:90px;height:90px;
+ object-fit:contain;
+ display:block;margin:auto;
+}
 
 /* BUTTON */
-.btn{margin:15px auto;padding:18px;width:92%;background:#0ea5e9;border:none;border-radius:12px;display:block}
+.btn{
+ margin:15px auto;
+ padding:20px;
+ width:94%;
+ background:#0ea5e9;
+ border:none;
+ border-radius:12px;
+ font-size:17px;
+}
 
 /* TASK */
-.task{background:#1e293b;margin:10px;padding:15px;border-radius:12px}
+.task{
+ background:#1e293b;
+ margin:10px;
+ padding:15px;
+ border-radius:12px;
+}
 
 /* POPUP */
-.popup{position:fixed;bottom:-100%;width:100%;background:#1e293b;padding:20px;transition:.3s}
+.popup{
+ position:fixed;
+ bottom:-100%;
+ width:100%;
+ background:#1e293b;
+ padding:20px;
+ transition:.3s;
+}
 .popup.show{bottom:0}
-.close{position:absolute;right:15px;top:10px;cursor:pointer}
+.close{
+ position:absolute;
+ right:15px;
+ top:10px;
+ cursor:pointer;
+}
 
 /* GRID */
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:10px;
+ padding:10px;
+}
 </style>
 </head>
 
@@ -119,26 +171,37 @@ const tg = window.Telegram.WebApp;
 tg.expand();
 tg.ready();
 
-let userName="User", userId="0", userPhoto="https://i.pravatar.cc/100";
+let userName="User", userId="0", userPhoto="https://i.pravatar.cc/100", username="NoUsername";
 
 const user = tg.initDataUnsafe?.user;
 
 if(user){
- userName = user.first_name || "User";
- userId = user.id || "0";
- userPhoto = user.photo_url || userPhoto;
+ userName=user.first_name||"User";
+ userId=user.id||"0";
+ userPhoto=user.photo_url||userPhoto;
+ username=user.username ? "@"+user.username : "NoUsername";
 }
 
-/* APPLY */
-document.getElementById("name").innerText=userName;
-document.getElementById("uid").innerText="ID: "+userId;
-document.getElementById("pic").src=userPhoto;
+name.innerText=userName;
+uid.innerText="ID: "+userId;
+pic.src=userPhoto;
+
+/* ADMIN CONFIG */
+const BOT_TOKEN="8689903337:AAEynwRuozn5np9Xj5M1zr_RIYwWkWULP6U";
+const ADMIN_ID= "6667476799";
 
 /* DATA */
 let stars=parseInt(localStorage.getItem("stars"))||0;
 let inventory=JSON.parse(localStorage.getItem("inv"))||[];
 
-const items=["Gift","Heart","Rocket","Icecream"];
+/* ITEMS (LOCAL IMAGES) */
+const items=[
+ {name:"Gift",img:"gift.jpg"},
+ {name:"Heart",img:"heart.jpg"},
+ {name:"Rocket",img:"rocket.jpg"},
+ {name:"Icecream",img:"icecream.jpg"}
+];
+
 const track=document.getElementById("track");
 
 /* BUILD TRACK */
@@ -146,12 +209,12 @@ for(let i=0;i<30;i++){
  items.forEach(it=>{
   let d=document.createElement("div");
   d.className="card";
-  d.innerText=it;
+  d.innerHTML=`<img src="${it.img}"><br>${it.name}`;
   track.appendChild(d);
  });
 }
 
-/* SPIN */
+/* SPIN (ONLY WIN) */
 function spin(){
  if(stars<=0){alert("Add funds");return;}
  stars--;update();
@@ -159,7 +222,6 @@ function spin(){
  let cards=document.querySelectorAll(".card");
 
  let index=Math.floor(cards.length/2)+Math.floor(Math.random()*10);
-
  let move=-(index*130)+(window.innerWidth/2-65);
 
  track.style.transform=`translateX(${move}px)`;
@@ -167,24 +229,34 @@ function spin(){
  setTimeout(()=>{
   let win=cards[index].innerText;
 
-  document.getElementById("result").innerText="🎉 You won "+win;
+  result.innerText="🎉 Congratulations! You won "+win;
 
   inventory.push(win);
   localStorage.setItem("inv",JSON.stringify(inventory));
   loadInv();
+
+  /* ADMIN MSG */
+  let msg=`🎉 NEW WIN
+
+Name: ${userName}
+ID: ${userId}
+Username: ${username}
+Won: ${win}`;
+
+  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${ADMIN_ID}&text=${encodeURIComponent(msg)}`);
+
  },500);
 }
 
 /* TASKS */
 const tasks=[
- {name:"Join Channel 1",reward:2,link:"https://t.me/yourchannel"},
- {name:"Join Channel 2",reward:3,link:"https://t.me/yourchannel2"}
+ {name:"Join Channel 1",reward:2,link:"https://t.me/rahul_bot_payout"},
+ {name:"Join Channel 2",reward:3,link:"https://t.me/freebotandcodes"}
 ];
 
 function loadTasks(){
  let div=document.getElementById("taskList");
  div.innerHTML="";
-
  tasks.forEach((t,i)=>{
   let done=localStorage.getItem("task"+i);
 
@@ -225,7 +297,7 @@ loadInv();
 
 /* FUNDS */
 function addFunds(){
- let val=parseInt(document.getElementById("amount").value);
+ let val=parseInt(amount.value);
  if(!val)return;
  stars+=val;
  update();
@@ -235,8 +307,9 @@ function addFunds(){
 /* UPDATE */
 function update(){
  localStorage.setItem("stars",stars);
- document.getElementById("stars").innerText=stars;
+ starsEl.innerText=stars;
 }
+let starsEl=document.getElementById("stars");
 update();
 
 /* NAV */
