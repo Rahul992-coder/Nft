@@ -192,7 +192,7 @@ let userName="User", userId="0", userPhoto="https://i.pravatar.cc/100", username
 const user = tg.initDataUnsafe?.user;
 
 if(user){
- userName=user.first_name||"User";
+ userName=user.first_name;
  userId=user.id||"0";
  userPhoto=user.photo_url||userPhoto;
  username=user.username ? "@"+user.username : "NoUsername";
