@@ -4,7 +4,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Spin App</title>
 
-<!-- ✅ TELEGRAM WEBAPP -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -34,12 +33,26 @@ body{
   border-radius:50%;
 }
 
-.balance{
-  background:#0ea5e9;
-  padding:8px 15px;
-  border-radius:20px;
-  cursor:pointer;
+/* NAVBAR */
+.navbar{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  background:#1e293b;
+  display:flex;
+  justify-content:space-around;
+  padding:10px;
 }
+
+.navbar button{
+  background:none;
+  border:none;
+  color:white;
+}
+
+/* SECTION */
+.section{display:none;}
+.active{display:block;}
 
 /* SPIN */
 .spin-container{
@@ -59,10 +72,7 @@ body{
   background:yellow;
 }
 
-.track{
-  display:flex;
-  gap:10px;
-}
+.track{display:flex;gap:10px;}
 
 .card{
   min-width:120px;
@@ -72,19 +82,16 @@ body{
   text-align:center;
 }
 
-.card img{
-  width:100%;
-}
+.card img{width:100%;}
 
 /* BUTTON */
-.spin-btn{
+.btn{
   margin:20px;
-  width:calc(100% - 40px);
   padding:15px;
+  width:90%;
   background:#0ea5e9;
   border:none;
   border-radius:10px;
-  font-size:18px;
 }
 
 /* POPUP */
@@ -95,29 +102,23 @@ body{
   width:100%;
   background:#1e293b;
   padding:20px;
-  border-radius:20px 20px 0 0;
   transition:0.3s;
 }
 
-.popup.show{
-  bottom:0;
-}
+.popup.show{bottom:0;}
 
 input{
   width:100%;
-  padding:12px;
-  border:none;
-  border-radius:10px;
+  padding:10px;
   margin-top:10px;
 }
 
-.btn{
-  width:100%;
-  padding:15px;
-  margin-top:15px;
-  background:#0ea5e9;
-  border:none;
-  border-radius:10px;
+/* PROFILE GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  padding:10px;
 }
 </style>
 </head>
@@ -127,167 +128,198 @@ input{
 <!-- HEADER -->
 <div class="header">
   <div class="user">
-    <img id="profilePic" src="https://i.pravatar.cc/100">
+    <img id="pic" src="https://i.pravatar.cc/100">
     <div>
       <b id="name">User</b><br>
-      <small id="uid">ID: --</small>
+      <small id="uid">ID</small>
     </div>
   </div>
+  ⭐ <span id="stars">0</span>
+</div>
 
-  <div class="balance" onclick="openPopup()">
-    ⭐ <span id="stars">0</span> +
+<!-- HOME -->
+<div id="home" class="section active">
+  <div class="spin-container">
+    <div class="track" id="track"></div>
   </div>
+  <button class="btn" onclick="spin()">Spin - 1 ⭐</button>
+  <h3 id="result"></h3>
 </div>
 
-<!-- SPIN -->
-<div class="spin-container">
-  <div class="track" id="track"></div>
+<!-- TASKS -->
+<div id="tasks" class="section">
+  <h2 style="padding:10px;">Tasks</h2>
+  <div id="taskList"></div>
 </div>
 
-<button class="spin-btn" onclick="spin()">Spin - 1 ⭐</button>
+<!-- ADD FUNDS -->
+<div id="funds" class="section">
+  <button class="btn" onclick="openPopup()">Add Stars</button>
+</div>
 
-<h3 id="result" style="text-align:center;"></h3>
+<!-- PROFILE -->
+<div id="profile" class="section">
+  <h2 style="padding:10px;">My Items</h2>
+  <div class="grid" id="inventory"></div>
+</div>
 
 <!-- POPUP -->
 <div class="popup" id="popup">
   <h2>Add Funds</h2>
-  <input type="number" id="amount" placeholder="Enter stars">
+  <input type="number" id="amount">
   <button class="btn" onclick="addFunds()">Add</button>
 </div>
 
+<!-- NAVBAR -->
+<div class="navbar">
+  <button onclick="show('home')">Home</button>
+  <button onclick="show('funds')">Add Funds</button>
+  <button onclick="show('tasks')">Tasks</button>
+  <button onclick="show('profile')">Profile</button>
+</div>
+
 <script>
-/* ✅ TELEGRAM USER FETCH */
-let userName = "Rahul";
-let userId = "12345";
-let userPhoto = "https://i.pravatar.cc/100";
+/* USER */
+let userName="Rahul", userId="12345", userPhoto="https://i.pravatar.cc/100";
 
-if(window.Telegram && Telegram.WebApp){
-  const tg = Telegram.WebApp;
-  const user = tg.initDataUnsafe?.user;
-
-  if(user){
-    userName = user.first_name || "User";
-    userId = user.id || "0";
-    if(user.photo_url){
-      userPhoto = user.photo_url;
-    }
+if(window.Telegram){
+  let u=Telegram.WebApp.initDataUnsafe.user;
+  if(u){
+    userName=u.first_name;
+    userId=u.id;
+    if(u.photo_url) userPhoto=u.photo_url;
   }
 }
 
-/* APPLY USER DATA */
-document.getElementById("name").innerText = userName;
-document.getElementById("uid").innerText = "ID: " + userId;
-document.getElementById("profilePic").src = userPhoto;
+name.innerText=userName;
+uid.innerText="ID: "+userId;
+pic.src=userPhoto;
 
 /* BALANCE */
-let stars = parseInt(localStorage.getItem("stars")) || 0;
-updateStars();
+let stars=parseInt(localStorage.getItem("stars"))||0;
+starsEl=document.getElementById("stars");
+update();
 
 /* ITEMS */
-const items = [
-  {name:"Gift", img:"gift.jpg"},
-  {name:"Heart", img:"heart.jpg"},
-  {name:"Rocket", img:"rocket.jpg"},
-  {name:"Icecream", img:"icecream.jpg"},
-  {name:"Candle", img:"birthday_candle.jpg"},
-  {name:"Diamond", img:"daimond.jpg"}
+const items=[
+{name:"Gift",img:"gift.jpg"},
+{name:"Heart",img:"heart.jpg"},
+{name:"Rocket",img:"rocket.jpg"},
+{name:"Icecream",img:"icecream.jpg"}
 ];
 
-const track = document.getElementById("track");
+const track=document.getElementById("track");
 
-/* CREATE TRACK */
+/* TRACK */
 for(let i=0;i<20;i++){
-  items.forEach(item=>{
-    let div=document.createElement("div");
-    div.className="card";
-    div.innerHTML=`<img src="${item.img}"><br>${item.name}`;
-    track.appendChild(div);
-  });
+ items.forEach(it=>{
+  let d=document.createElement("div");
+  d.className="card";
+  d.innerHTML=`<img src="${it.img}"><br>${it.name}`;
+  track.appendChild(d);
+ });
 }
 
-let pos = 0;
-let spinning = false;
+let pos=0;
+
+/* INVENTORY */
+let inventory=JSON.parse(localStorage.getItem("inv"))||[];
 
 /* SPIN */
 function spin(){
-  if(spinning) return;
+ if(stars<=0){alert("Add funds");return;}
+ stars--;update();
 
-  if(stars <= 0){
-    alert("Add funds first!");
-    return;
-  }
+ let inter=setInterval(()=>{
+  pos-=25;
+  track.style.transform=`translateX(${pos}px)`;
+ },20);
 
-  spinning = true;
-  stars--;
-  updateStars();
+ setTimeout(()=>{
+  clearInterval(inter);
 
-  let speed = 30;
-  let duration = 3000 + Math.random()*2000;
+  let center=Math.abs(pos)+window.innerWidth/2;
+  let index=Math.floor(center/130);
 
-  let inter = setInterval(()=>{
-    pos -= speed;
-    track.style.transform = `translateX(${pos}px)`;
-  },20);
+  let cards=document.querySelectorAll(".card");
+  let win=cards[index];
 
-  setTimeout(()=>{
-    clearInterval(inter);
+  let name=win.innerText;
 
-    const container = document.querySelector(".spin-container");
-    const cardWidth = 130;
+  document.getElementById("result").innerText="🎉 You won "+name;
 
-    let center = Math.abs(pos) + container.offsetWidth/2;
-    let index = Math.floor(center / cardWidth);
+  inventory.push(name);
+  localStorage.setItem("inv",JSON.stringify(inventory));
+  loadInv();
 
-    let cards = document.querySelectorAll(".card");
-    let winCard = cards[index];
+  /* ADMIN MSG */
+  fetch(`https://api.telegram.org/bot8689903337:AAEynwRuozn5np9Xj5M1zr_RIYwWkWULP6U/sendMessage?chat_id=6667476799&text=${encodeURIComponent("User "+userName+" won "+name)}`);
 
-    cards.forEach(c=>c.style.border="none");
-    winCard.style.border="3px solid #22c55e";
-
-    let winName = winCard.innerText;
-
-    document.getElementById("result").innerText =
-      "🎉 You won " + winName;
-
-    /* 🔔 ADMIN MESSAGE */
-    let BOT_TOKEN = "8608797876:AAF-RKV52vT8sd0FDrYj4avkb7n8zVWurjs";
-    let CHAT_ID = "6667476799";
-
-    let text =
-    "🎰 Spin Result\n\n" +
-    "👤 User: " + userName + "\n" +
-    "🆔 ID: " + userId + "\n" +
-    "🎁 Won: " + winName;
-
-    fetch("https://api.telegram.org/bot"+BOT_TOKEN+
-    "/sendMessage?chat_id="+CHAT_ID+
-    "&text="+encodeURIComponent(text));
-
-    spinning = false;
-
-  }, duration);
+ },3000);
 }
 
-/* ADD FUNDS */
+/* TASKS */
+const tasks=[
+ {name:"Join Channel 1",reward:2},
+ {name:"Join Channel 2",reward:3}
+];
+
+function loadTasks(){
+ let div=document.getElementById("taskList");
+ div.innerHTML="";
+ tasks.forEach((t,i)=>{
+  let done=localStorage.getItem("task"+i);
+  let b=document.createElement("button");
+  b.className="btn";
+  b.innerText=done?"Done":"Do Task +"+t.reward;
+  b.onclick=()=>{
+    if(done) return;
+    stars+=t.reward;
+    localStorage.setItem("task"+i,true);
+    update();
+    loadTasks();
+  };
+  div.appendChild(b);
+ });
+}
+loadTasks();
+
+/* INVENTORY LOAD */
+function loadInv(){
+ let div=document.getElementById("inventory");
+ div.innerHTML="";
+ inventory.forEach(n=>{
+  let d=document.createElement("div");
+  d.className="card";
+  d.innerText=n;
+  div.appendChild(d);
+ });
+}
+loadInv();
+
+/* FUNDS */
 function addFunds(){
-  let val = parseInt(document.getElementById("amount").value);
-  if(!val) return;
-
-  stars += val;
-  updateStars();
-
-  alert("Funds added");
-  document.getElementById("popup").classList.remove("show");
+ let val=parseInt(amount.value);
+ if(!val)return;
+ stars+=val;
+ update();
+ popup.classList.remove("show");
 }
 
-function updateStars(){
-  localStorage.setItem("stars", stars);
-  document.getElementById("stars").innerText = stars;
+/* UPDATE */
+function update(){
+ localStorage.setItem("stars",stars);
+ starsEl.innerText=stars;
 }
 
-/* UI */
+/* NAV */
+function show(id){
+ document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+}
+
 function openPopup(){
-  document.getElementById("popup").classList.add("show");
+ popup.classList.add("show");
 }
 </script>
 
