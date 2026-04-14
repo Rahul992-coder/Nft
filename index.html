@@ -4,137 +4,54 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Spin App</title>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
-body{
-  margin:0;
-  background:#0f172a;
-  color:white;
-  font-family:Arial;
-}
+body{margin:0;background:#0f172a;color:white;font-family:Arial}
 
 /* HEADER */
-.header{
-  display:flex;
-  justify-content:space-between;
-  padding:15px;
-  background:#1e293b;
-}
+.header{display:flex;justify-content:space-between;padding:15px;background:#1e293b}
+.user{display:flex;align-items:center;gap:10px}
+.user img{width:45px;border-radius:50%}
 
-/* USER */
-.user{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.user img{
-  width:45px;
-  border-radius:50%;
-}
-
-/* NAVBAR */
-.navbar{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  background:#1e293b;
-  display:flex;
-  justify-content:space-around;
-  padding:10px;
-}
-
-.navbar button{
-  background:none;
-  border:none;
-  color:white;
-}
+/* NAV */
+.navbar{position:fixed;bottom:0;width:100%;background:#1e293b;display:flex;justify-content:space-around;padding:10px}
+.navbar button{background:none;border:none;color:white}
 
 /* SECTION */
-.section{display:none;}
-.active{display:block;}
+.section{display:none}
+.active{display:block}
 
 /* SPIN */
-.spin-container{
-  overflow:hidden;
-  padding:20px;
-  position:relative;
-}
+.spin-container{overflow:hidden;padding:20px;position:relative}
 
-/* CENTER BOX */
+/* YELLOW BOX */
 .center-box{
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  width:130px;
-  height:150px;
-  border:3px solid yellow;
-  border-radius:12px;
-  pointer-events:none;
+ position:absolute;
+ top:50%;left:50%;
+ transform:translate(-50%,-50%);
+ width:130px;height:150px;
+ border:3px solid yellow;
+ border-radius:12px;
+ pointer-events:none;
 }
 
-/* TRACK */
-.track{
-  display:flex;
-  gap:10px;
-  transition:0.5s ease;
-}
-
-.card{
-  min-width:120px;
-  background:#1e293b;
-  border-radius:15px;
-  padding:10px;
-  text-align:center;
-}
-
-.card img{width:100%;}
+.track{display:flex;gap:10px;transition:0.5s ease}
+.card{min-width:120px;background:#1e293b;border-radius:15px;padding:10px;text-align:center}
 
 /* BUTTON */
-.btn{
-  margin:15px auto;
-  padding:18px;
-  width:92%;
-  background:#0ea5e9;
-  border:none;
-  border-radius:12px;
-  display:block;
-}
+.btn{margin:15px auto;padding:18px;width:92%;background:#0ea5e9;border:none;border-radius:12px;display:block}
 
 /* TASK */
-.task{
-  background:#1e293b;
-  margin:10px;
-  padding:15px;
-  border-radius:12px;
-}
+.task{background:#1e293b;margin:10px;padding:15px;border-radius:12px}
 
 /* POPUP */
-.popup{
-  position:fixed;
-  bottom:-100%;
-  width:100%;
-  background:#1e293b;
-  padding:20px;
-  transition:0.3s;
-}
-
-.popup.show{bottom:0;}
-
-.close{
-  position:absolute;
-  right:15px;
-  top:10px;
-  cursor:pointer;
-}
+.popup{position:fixed;bottom:-100%;width:100%;background:#1e293b;padding:20px;transition:.3s}
+.popup.show{bottom:0}
+.close{position:absolute;right:15px;top:10px;cursor:pointer}
 
 /* GRID */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
-  padding:10px;
-}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
 </style>
 </head>
 
@@ -143,10 +60,10 @@ body{
 <!-- HEADER -->
 <div class="header">
   <div class="user">
-    <img src="https://i.pravatar.cc/100">
+    <img id="pic">
     <div>
-      <b>Rahul</b><br>
-      <small>ID:12345</small>
+      <b id="name">User</b><br>
+      <small id="uid">ID</small>
     </div>
   </div>
   ⭐ <span id="stars">0</span>
@@ -197,6 +114,27 @@ body{
 </div>
 
 <script>
+/* TELEGRAM USER */
+const tg = window.Telegram.WebApp;
+tg.expand();
+tg.ready();
+
+let userName="User", userId="0", userPhoto="https://i.pravatar.cc/100";
+
+const user = tg.initDataUnsafe?.user;
+
+if(user){
+ userName = user.first_name || "User";
+ userId = user.id || "0";
+ userPhoto = user.photo_url || userPhoto;
+}
+
+/* APPLY */
+document.getElementById("name").innerText=userName;
+document.getElementById("uid").innerText="ID: "+userId;
+document.getElementById("pic").src=userPhoto;
+
+/* DATA */
 let stars=parseInt(localStorage.getItem("stars"))||0;
 let inventory=JSON.parse(localStorage.getItem("inv"))||[];
 
@@ -239,8 +177,8 @@ function spin(){
 
 /* TASKS */
 const tasks=[
- {name:"Join Channel 1",reward:2},
- {name:"Join Channel 2",reward:3}
+ {name:"Join Channel 1",reward:2,link:"https://t.me/yourchannel"},
+ {name:"Join Channel 2",reward:3,link:"https://t.me/yourchannel2"}
 ];
 
 function loadTasks(){
@@ -260,6 +198,7 @@ function loadTasks(){
 
   d.querySelector("button").onclick=()=>{
     if(done)return;
+    window.open(t.link);
     stars+=t.reward;
     localStorage.setItem("task"+i,true);
     update();
@@ -307,12 +246,8 @@ function show(id){
 }
 
 /* POPUP */
-function openPopup(){
- document.getElementById("popup").classList.add("show");
-}
-function closePopup(){
- document.getElementById("popup").classList.remove("show");
-}
+function openPopup(){popup.classList.add("show")}
+function closePopup(){popup.classList.remove("show")}
 </script>
 
 </body>
